@@ -3,14 +3,19 @@
     "author": "makerbase",
     "version": "1.0.2",
     "description": "connect with TFT35 WIFI on Cura",
-    "api": 5,
+    "api": "7.5.0",
     "supported_sdk_versions": [
         "5.0.0",
         "6.0.0",
         "6.1.0",
         "6.2.0",
         "6.3.0",
-        "7.0.0"
+        "7.0.0",
+		"7.1.0",
+        "7.2.0",
+        "7.3.0",
+        "7.4.0",
+		"7.5.0"
     ],
     "i18n-catalog": "cura"
 }

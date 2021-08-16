@@ -321,7 +321,7 @@ Component
                 Label
                 {
                 id: versionTitle
-                text: catalog.i18nc("@title:window", "MKS CURA-Plugin V4.4")
+                text: catalog.i18nc("@title:window", "MKS CURA-Plugin V4.9")
                 wrapMode: Text.WordWrap
                 font: UM.Theme.getFont("large_bold")
                 }
@@ -707,7 +707,7 @@ Component
                     {
                         sdDialog.hide()
                         Cura.MachineManager.printerOutputDevices[0].deleteSDFiles(listview.model[listview.currentIndex])
-                        listview.model = Cura.MachineManager.printerOutputDevices[0].getSDFiles
+                        // listview.model = Cura.MachineManager.printerOutputDevices[0].getSDFiles
                     }
                 }
             },
@@ -729,8 +729,9 @@ Component
                 text: catalog.i18nc("@action:button", "Refresh")
                 onClicked:
                 {
-                    Cura.MachineManager.printerOutputDevices[0].getSDFiles
-                    
+                    sdDialog.hide()
+                    // listview.model = Cura.MachineManager.printerOutputDevices[0].getSDFiles
+                    sdDialog.showDialog()              
                 }
             }
         ]

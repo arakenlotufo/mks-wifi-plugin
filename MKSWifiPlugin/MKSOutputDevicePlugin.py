@@ -133,7 +133,7 @@ class MKSOutputDevicePlugin(QObject, OutputDevicePlugin):
 
     def reCheckConnections(self):
         active_machine = Application.getInstance().getGlobalContainerStack()
-        Logger.log("d", "GlobalContainerStack change %s" % active_machine.getMetaDataEntry("mks_network_key"))
+        # Logger.log("d", "GlobalContainerStack change %s" % active_machine.getMetaDataEntry("mks_network_key"))
         if not active_machine:
             return
 
