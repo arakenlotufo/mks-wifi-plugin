@@ -35,6 +35,7 @@ import base64
 import sys
 from enum import IntEnum
 from UM.Preferences import Preferences
+from configparser import ConfigParser
 
 from typing import cast, Any, Callable, Dict, List, Optional, Union, TYPE_CHECKING
 if TYPE_CHECKING:
@@ -285,9 +286,15 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
             self._error_message = Message(i18n_catalog.i18nc("@info:status", "Error: printing can not send"))
             self._error_message.show()
 
-    @pyqtSlot()
-    def printer_E_num(self):
-        return self._number_of_extruders
+    @pyqtSlot(result = int)
+    def printer_E_num(self) -> int:
+        # return self._number_of_extruders
+        if len(self._printers) <= 0:
+            return 0
+        printer = self._printers[0]
+        lens = len(printer.extruders)
+        Logger.log("d", "printer_E_num==: %d" % lens)
+        return lens
 
     @pyqtSlot()
     def printer_state(self):
@@ -311,7 +318,10 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
     @pyqtSlot(str)
     def deleteSDFiles(self, filename):
         # filename = "几何图.gcode"
-        self._sendCommand("M30 1:/" + filename)
+        if self.getTinyBee(self._address):
+            self._sendCommand("M30 " + filename)
+        else:
+            self._sendCommand("M30 1:/" + filename)
         # if filename in self.sdFiles:
         #     self.sdFiles.remove(filename)
         self._sendCommand("M20")
@@ -577,7 +587,9 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
                 post_request = QNetworkRequest(QUrl("http://%s/upload?X-Filename=%s" % (self._address, file_name)))
                 # post_request = QNetworkRequest(QUrl("http://%s/upload?X-Filename=%s" % (self._address, QUrl.toPercentEncoding(file_name))))
                 # post_request = QNetworkRequest(QUrl("http://%s/upload?X-Filename=%s" % (self._address, "%E5%87%A0%E4%BD%95%E4%BD%93.gcode")))
-                post_request.setRawHeader(b'Content-Type', b'application/octet-stream')
+                if not self.getTinyBee(self._address):
+                    Logger.log("e", "getTinyBee: false-----------")
+                    post_request.setRawHeader(b'Content-Type', b'application/octet-stream')
                 # post_request.setRawHeader(b'Content-Type', b'application/x-www-form-urlencoded')
                 post_request.setRawHeader(b'Connection', b'keep-alive')
                 self._post_reply = self._manager.post(post_request, self._post_multi_part)
@@ -595,7 +607,24 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
                 self._dealUploadFileErr()
                 Logger.log("e", "An exception occurred in network connection: %s" % str(e))
 
-
+    def getTinyBee(self, ipAddress):
+        # Logger.log("e", "getMKSWifiConfig --ipAddress-----" + ipAddress)
+        if ipAddress == "":
+            return False
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mkswifiConfig.cfg")
+        # Logger.log("e", "getMKSWifiConfig --file_path-----" + file_path)
+        if not os.path.isfile(file_path):
+            # Logger.log("e", "[%s] is not a file", file_path)
+            return False
+        parser = ConfigParser(interpolation = None, allow_no_value = True)  # Accept options without any value,
+        parser.read([file_path])
+        for section in parser.sections():
+            # Logger.log("e", "getMKSWifiConfig --section-----" + section)
+            if ipAddress == section:
+                Logger.log("e", "getTinyBee --bool-----" + parser[section]["tinyBee"])
+                if (parser[section]["tinyBee"] == "true"):
+                    return True
+        return False
             
 
     @pyqtProperty("QVariantList")
@@ -933,7 +962,8 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
             self._post_part.setBody(single_string_file_data.encode())
             self._post_multi_part.append(self._post_part)
             post_request = QNetworkRequest(QUrl("http://%s/upload?X-Filename=%s" % (self._address, file_name)))
-            post_request.setRawHeader(b'Content-Type', b'application/octet-stream')
+            if not self.getTinyBee(self._address):
+                post_request.setRawHeader(b'Content-Type', b'application/octet-stream')
             post_request.setRawHeader(b'Connection', b'keep-alive')
             self._post_reply = self._manager.post(post_request, self._post_multi_part)
             self._post_reply.uploadProgress.connect(self._onUploadProgress)
@@ -950,7 +980,18 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
             Logger.log("e", "An exception occurred in network connection: %s" % str(e))
 
     def _printFile(self):
-        self._sendCommand("M23 " + self._last_file_name)
+        if self.getTinyBee(self._address):
+            name = self._last_file_name
+            if ("." in name):
+                opts = name.split(".")
+                name = opts[0].upper()
+                if (opts[1].upper() != "GCO" and opts[1].upper() != "G"):
+                    name = name + ".GCO"
+                else:
+                    name = name + "." + opts[1].upper()
+            self._sendCommand("M23 " + name)
+        else:
+            self._sendCommand("M23 " + self._last_file_name)
         self._sendCommand("M24")
         self.isstartprint = False
 
@@ -1125,20 +1166,37 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
                 # Logger.log("d", "mks recv self._socket addr: %s" % self._socket.peerAddress)
                 # self.__additional_components_view.findChild(QObject, "ManualPrinterControl").setProperty("enabled", False)
                 s = s.replace("\r", "").replace("\n", "")
+                sline = s.replace(" ", "")
                 # if time.time() - self.last_update_time > 10 or time.time() - self.last_update_time<-10:
                 #     Logger.log("d", "mks time:"+str(self.last_update_time)+str(time.time()))
                 #     self._sendCommand("M20")
                 #     self.last_update_time = time.time() 
-                if "T" in s and "B" in s and "T0" in s:
-                    t0_temp = s[s.find("T0:") + len("T0:"):s.find("T1:")]
-                    t1_temp = s[s.find("T1:") + len("T1:"):s.find("@:")]
-                    bed_temp = s[s.find("B:") + len("B:"):s.find("T0:")]
+                # ok T0:25.97 /0.00 B:25.48 /0.00 T0:25.97 /0.00 T1:25.88 /0.00 @:0 B@:0 @0:0 @1:0
+                # ok T:-1.33 /0.00 B:1.25 /0.00 @:0 B@:0
+                # T:22 /0 B:21 /0 T0:22 /0 T1:0 /0 @:0 B@:0
+                # T:22 /0 B:23 /0 T0:22 /0 T1:0 /0 @:0 B@:0
+                # if "T" in s and "B" in s and "T0" in s:
+                if "T" in sline and "B" in sline:
+                    # t0_temp = s[s.find("T0:") + len("T0:"):s.find("T1:")]
+                    t0_temp = ""
+                    bed_temp = ""
+                    if "ok" in sline.lower():
+                        # tinybee
+                        if "T1" in sline:
+                            t0_temp = sline[sline.find("T0:") + len("T0:"):sline.find("B:")]
+                            bed_temp = sline[sline.find("B:") + len("B:"):sline.find("T1:")]
+                            bed_temp = bed_temp[0:bed_temp.find("T0:")]
+                        else:
+                            t0_temp = sline[sline.find("T:") + len("T:"):sline.find("B:")]
+                            bed_temp = sline[sline.find("B:") + len("B:"):sline.find("@:")]
+                    else:
+                        t0_temp = sline[sline.find("T0:") + len("T0:"):sline.find("T1:")]
+                        bed_temp = sline[sline.find("B:") + len("B:"):sline.find("T0:")]
                     t0_nowtemp = float(t0_temp[0:t0_temp.find("/")])
                     t0_targettemp = float(t0_temp[t0_temp.find("/") + 1:len(t0_temp)])
-                    t1_nowtemp = float(t1_temp[0:t1_temp.find("/")])
-                    t1_targettemp = float(t1_temp[t1_temp.find("/") + 1:len(t1_temp)])
                     bed_nowtemp = float(bed_temp[0:bed_temp.find("/")])
                     bed_targettemp = float(bed_temp[bed_temp.find("/") + 1:len(bed_temp)])
+                    
                     if t0_nowtemp >= t0_targettemp and not self.isstartprint:
                         self.isstartprint = True
 
@@ -1148,7 +1206,19 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
                     extruder = printer.extruders[0]
                     extruder.updateTargetHotendTemperature(t0_targettemp)
                     extruder.updateHotendTemperature(t0_nowtemp)
-                    # self._number_of_extruders = 1
+
+                    lens = len(printer.extruders)
+                    if "T1" in sline and lens > 1:
+                        t1_temp = sline[sline.find("T1:") + len("T1:"):sline.find("@:")]
+                        t1_nowtemp = float(t1_temp[0:t1_temp.find("/")])
+                        t1_targettemp = float(t1_temp[t1_temp.find("/") + 1:len(t1_temp)])
+                        self._number_of_extruders = 2
+                        extruder = printer.extruders[1]
+                        extruder.updateHotendTemperature(t1_nowtemp)
+                        extruder.updateTargetHotendTemperature(t1_targettemp)
+                    else:
+                        self._number_of_extruders = 1
+
                     # extruder = printer.extruders[1]
                     # extruder.updateHotendTemperature(t1_nowtemp)
                     # extruder.updateTargetHotendTemperature(t1_targettemp)
@@ -1280,11 +1350,15 @@ class MKSOutputDevice(NetworkedPrinterOutputDevice):
                     self._sdFileList = False
                     self.isGettingFiles = False
                     s = s.replace("\n", "").replace("\r", "")
+                    if " " in s:
+                        s = s.split(" ")[0]
                     if s.lower().endswith("gcode") or s.lower().endswith("gco") or s.lower.endswith("g"):
                         self.sdFiles.append(s)
                     continue
                 if self._sdFileList :
                     s = s.replace("\n", "").replace("\r", "")
+                    if " " in s:
+                        s = s.split(" ")[0]
                     if s.lower().endswith("gcode") or s.lower().endswith("gco") or s.lower.endswith("g"):
                         self.sdFiles.append(s)
                     continue

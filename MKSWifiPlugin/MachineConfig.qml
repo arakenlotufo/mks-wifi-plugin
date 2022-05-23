@@ -13,6 +13,7 @@ Cura.MachineAction
     property var selectedPrinter: null
     property bool completeProperties: true
 
+
     property var connectedDevice: Cura.MachineManager.printerOutputDevices.length >= 1 ? Cura.MachineManager.printerOutputDevices[0] : null
     property var printerModel: connectedDevice != null ? connectedDevice.activePrinter : null
 
@@ -31,6 +32,26 @@ Cura.MachineAction
             }
         }
     }
+
+    function setMKSConfig(checked)
+    {
+        var ip = base.selectedPrinter ? base.selectedPrinter.ipAddress : ""
+        var val = "false"
+        if (checked) {
+            val = "true"
+        }
+        manager.setMKSWifiConfig(ip, val)
+    }
+
+    function loadMKSConfig()
+    {
+        var val = manager.loadMKSWifiConfig(base.selectedPrinter ? base.selectedPrinter.ipAddress : "")
+        if (val == "true") {
+            return true
+        }
+        return false
+    }
+    property bool isTinyBeeBoard: loadMKSConfig()
 
     function connectToPrinter()
     {
@@ -288,6 +309,14 @@ Cura.MachineAction
                         wrapMode: Text.WordWrap
                         text: base.selectedPrinter ? base.selectedPrinter.ipAddress : ""
                     }
+                }
+                 CheckBox
+                {
+                    id: tinyBeeSettings
+                    checked: isTinyBeeBoard
+                    onClicked: setMKSConfig(checked)
+
+                    text: catalog.i18nc("@option:check", "TinyBee Board");
                 }
 
                 Label

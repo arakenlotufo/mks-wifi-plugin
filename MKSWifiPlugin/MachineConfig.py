@@ -18,6 +18,8 @@ import os.path
 import json
 import base64
 import time
+from configparser import ConfigParser
+import io
 
 from PyQt5.QtCore import QTimer
 
@@ -111,7 +113,7 @@ class MachineConfig(MachineAction):
     def removeManualPrinter(self, key, address):
         if not self._network_plugin:
             return
-
+        self.delMKSWifiConfig(address)
         self._network_plugin.removeManualPrinter(key, address)
 
     @pyqtSlot(str, str)
@@ -188,7 +190,82 @@ class MachineConfig(MachineAction):
             preferences = Application.getInstance().getPreferences()
             preferences.addPreference("mkswifi/stopupdate", "True")
             self._network_plugin.reCheckConnections()
-        
+
+    @pyqtSlot(str, result=str)
+    def loadMKSWifiConfig(self, ipAddress):
+        # Logger.log("e", "loadMKSWifiConfig --ipAddress-----" + ipAddress)
+        if ipAddress == "":
+            return "false"
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mkswifiConfig.cfg")
+        # Logger.log("e", "loadMKSWifiConfig --file_path-----" + file_path)
+        if not os.path.isfile(file_path):
+            # Logger.log("e", "[%s] is not a file", file_path)
+            return "false"
+        parser = ConfigParser(interpolation = None, allow_no_value = True)  # Accept options without any value,
+        parser.read([file_path])
+        hasConfig = False
+        for section in parser.sections():
+            # Logger.log("e", "loadMKSWifiConfig --section-----" + section)
+            if ipAddress == section:
+                hasConfig = True
+                # Logger.log("e", "loadMKSWifiConfig --bool-----" + parser[section]["tinyBee"])
+                return parser[section]["tinyBee"]
+        if not hasConfig:
+            parser.add_section(ipAddress)
+            parser[ipAddress]["ip"] = ipAddress
+            parser[ipAddress]["tinyBee"] = "false"
+            config_output = io.StringIO()
+            parser.write(config_output)
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mkswifiConfig.cfg"), "w", encoding = "utf-8") as f:
+                f.write(config_output.getvalue())
+        return "false"
+
+    @pyqtSlot(str, str)
+    def setMKSWifiConfig(self, ipAddress, isTinyBee):
+        # Logger.log("e", "setMKSWifiConfig --ipAddress-----" + ipAddress)
+        if ipAddress != "":
+            file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mkswifiConfig.cfg")
+            # Logger.log("e", "setMKSWifiConfig --file_path-----" + file_path)
+            if os.path.isfile(file_path):
+                Logger.log("e", "[%s] is not a file", file_path)
+                parser = ConfigParser(interpolation = None, allow_no_value = True)  # Accept options without any value,
+                parser.read([file_path])
+                hasConfig = False
+                for section in parser.sections():
+                    # Logger.log("e", "setMKSWifiConfig --section-----" + section)
+                    if ipAddress == section:
+                        hasConfig = True
+                        # Logger.log("e", "setMKSWifiConfig --bool-----" + parser[section]["tinyBee"])
+                        parser[section]["tinyBee"] = isTinyBee
+                if not hasConfig:
+                    parser.add_section(ipAddress)
+                    parser[ipAddress]["ip"] = ipAddress
+                    parser[ipAddress]["tinyBee"] = isTinyBee
+                config_output = io.StringIO()
+                parser.write(config_output)
+                with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mkswifiConfig.cfg"), "w", encoding = "utf-8") as f:
+                    f.write(config_output.getvalue())
+
+    def delMKSWifiConfig(self, ipAddress):
+        # Logger.log("e", "delMKSWifiConfig --ipAddress-----" + ipAddress)
+        if ipAddress != "":
+            file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mkswifiConfig.cfg")
+            # Logger.log("e", "delMKSWifiConfig --file_path-----" + file_path)
+            if os.path.isfile(file_path):
+                Logger.log("e", "[%s] is not a file", file_path)
+                parser = ConfigParser(interpolation = None, allow_no_value = True)  # Accept options without any value,
+                parser.read([file_path])
+                hasConfig = False
+                for section in parser.sections():
+                    # Logger.log("e", "delMKSWifiConfig --section-----" + section)
+                    if ipAddress == section:
+                        parser.remove_section(ipAddress)
+                        hasConfig = True
+                if hasConfig:
+                    config_output = io.StringIO()
+                    parser.write(config_output)
+                    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mkswifiConfig.cfg"), "w", encoding = "utf-8") as f:
+                        f.write(config_output.getvalue())
 
     @pyqtSlot()
     def printtest(self):

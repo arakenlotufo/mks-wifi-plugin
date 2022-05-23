@@ -118,7 +118,7 @@ Component
                 bottom: parent.bottom
                 bottomMargin: UM.Theme.getSize("default_margin").height
             }
-            Cura.PrintMonitor 
+            PrintMonitorNew 
             {
                 id:controlpanel
                 width: parent.width
@@ -321,7 +321,7 @@ Component
                 Label
                 {
                 id: versionTitle
-                text: catalog.i18nc("@title:window", "MKS CURA-Plugin V4.9")
+                text: catalog.i18nc("@title:window", "MKS CURA-Plugin V4.10")
                 wrapMode: Text.WordWrap
                 font: UM.Theme.getFont("large_bold")
                 }
@@ -451,174 +451,174 @@ Component
                 }
             
 
-            Column
-            {
-                 enabled:
-                {
-                    if (printerModel == null)
-                    {
-                        return false; //Can't control the printer if not connected
-                    }
+            // Column
+            // {
+            //      enabled:
+            //     {
+            //         if (printerModel == null)
+            //         {
+            //             return false; //Can't control the printer if not connected
+            //         }
 
-                    if (!connectedDevice.acceptsCommands)
-                    {
-                        return false; //Not allowed to do anything.
-                    }
+            //         if (!connectedDevice.acceptsCommands)
+            //         {
+            //             return false; //Not allowed to do anything.
+            //         }
 
-                    if(activePrintJob == null)
-                    {
-                        return true
-                    }
+            //         if(activePrintJob == null)
+            //         {
+            //             return true
+            //         }
 
-                    if (activePrintJob.state == "printing" || activePrintJob.state == "resuming" || activePrintJob.state == "pausing" || activePrintJob.state == "error" || activePrintJob.state == "offline")
-                    {
-                        return false; //Printer is in a state where it can't react to manual control
-                    }
-                    return true;
-                }
+            //         if (activePrintJob.state == "printing" || activePrintJob.state == "resuming" || activePrintJob.state == "pausing" || activePrintJob.state == "error" || activePrintJob.state == "offline")
+            //         {
+            //             return false; //Printer is in a state where it can't react to manual control
+            //         }
+            //         return true;
+            //     }
 
-                // enabled:
-                // {
-                //     // if(Cura.MachineManager.printerOutputDevices[0].printer_state() == 'printing')
-                //     // {
-                //     //     return false
-                //     // }else {
-                //     //     return true
-                //     // }      
-                //     // if (connectedPrinter != null && connectedPrinter.acceptsCommands) {
-                //     //     return false
-                //     // }else {
-                //     //     return true
-                //     // }
-                //     // if (Cura.MachineManager.printerOutputDevices[0].isprinterprinting() == "true") {
-                //     //     return true
-                //     // }else {
-                //     //     return false
-                //     // }
-                //     if (connectedPrinter.jobState == "printing") {
-                //         return false
-                //     }else {
-                //         return true
-                //     }
-                // }
-                x:270
-                y:220
-                spacing: UM.Theme.getSize("default_lining").height
-                anchors
-                {
-                    leftMargin: UM.Theme.getSize("default_margin").width
-                    rightMargin: UM.Theme.getSize("default_margin").width
-                }
+            //     // enabled:
+            //     // {
+            //     //     // if(Cura.MachineManager.printerOutputDevices[0].printer_state() == 'printing')
+            //     //     // {
+            //     //     //     return false
+            //     //     // }else {
+            //     //     //     return true
+            //     //     // }      
+            //     //     // if (connectedPrinter != null && connectedPrinter.acceptsCommands) {
+            //     //     //     return false
+            //     //     // }else {
+            //     //     //     return true
+            //     //     // }
+            //     //     // if (Cura.MachineManager.printerOutputDevices[0].isprinterprinting() == "true") {
+            //     //     //     return true
+            //     //     // }else {
+            //     //     //     return false
+            //     //     // }
+            //     //     if (connectedPrinter.jobState == "printing") {
+            //     //         return false
+            //     //     }else {
+            //     //         return true
+            //     //     }
+            //     // }
+            //     x:270
+            //     y:220
+            //     spacing: UM.Theme.getSize("default_lining").height
+            //     anchors
+            //     {
+            //         leftMargin: UM.Theme.getSize("default_margin").width
+            //         rightMargin: UM.Theme.getSize("default_margin").width
+            //     }
 
-                Label
-                    {
-                        text: catalog.i18nc("@label", "E0")
-                        color: UM.Theme.getColor("setting_control_text")
-                        font: UM.Theme.getFont("default")
-                        width: UM.Theme.getSize("section").height
-                        height: UM.Theme.getSize("setting_control").height
-                        verticalAlignment: Text.AlignVCenter
-                        horizontalAlignment: Text.AlignHCenter
-                    }
+            //     Label
+            //         {
+            //             text: catalog.i18nc("@label", "E0")
+            //             color: UM.Theme.getColor("setting_control_text")
+            //             font: UM.Theme.getFont("default")
+            //             width: UM.Theme.getSize("section").height
+            //             height: UM.Theme.getSize("setting_control").height
+            //             verticalAlignment: Text.AlignVCenter
+            //             horizontalAlignment: Text.AlignHCenter
+            //         }
 
-                Button
-                    {
-                        iconSource: UM.Theme.getIcon("arrow_top");
-                        style: UM.Theme.styles.monitor_button_style
-                        width: height
-                        height: UM.Theme.getSize("setting_control").height
+            //     Button
+            //         {
+            //             iconSource: UM.Theme.getIcon("arrow_top");
+            //             style: UM.Theme.styles.monitor_button_style
+            //             width: height
+            //             height: UM.Theme.getSize("setting_control").height
 
-                        onClicked:
-                        {
-                            Cura.MachineManager.printerOutputDevices[0].e0up()
-                        }
-                    }
-                Button
-                    {
-                        iconSource: UM.Theme.getIcon("arrow_bottom");
-                        style: UM.Theme.styles.monitor_button_style
-                        width: height
-                        height: UM.Theme.getSize("setting_control").height
+            //             onClicked:
+            //             {
+            //                 Cura.MachineManager.printerOutputDevices[0].e0up()
+            //             }
+            //         }
+            //     Button
+            //         {
+            //             iconSource: UM.Theme.getIcon("arrow_bottom");
+            //             style: UM.Theme.styles.monitor_button_style
+            //             width: height
+            //             height: UM.Theme.getSize("setting_control").height
 
-                        onClicked:
-                        {
-                            Cura.MachineManager.printerOutputDevices[0].e0down()
-                        }
-                    }
-                }
+            //             onClicked:
+            //             {
+            //                 Cura.MachineManager.printerOutputDevices[0].e0down()
+            //             }
+            //         }
+            //     }
 
-            Column
-            {
-                 enabled:
-                {
-                    if (printerModel == null)
-                    {
-                        return false; //Can't control the printer if not connected
-                    }
+            // Column
+            // {
+            //      enabled:
+            //     {
+            //         if (printerModel == null)
+            //         {
+            //             return false; //Can't control the printer if not connected
+            //         }
 
-                    if (!connectedDevice.acceptsCommands)
-                    {
-                        return false; //Not allowed to do anything.
-                    }
+            //         if (!connectedDevice.acceptsCommands)
+            //         {
+            //             return false; //Not allowed to do anything.
+            //         }
 
-                    if(activePrintJob == null)
-                    {
-                        return true
-                    }
+            //         if(activePrintJob == null)
+            //         {
+            //             return true
+            //         }
 
-                    if (activePrintJob.state == "printing" || activePrintJob.state == "resuming" || activePrintJob.state == "pausing" || activePrintJob.state == "error" || activePrintJob.state == "offline")
-                    {
-                        return false; //Printer is in a state where it can't react to manual control
-                    }
-                    return true;
-                }
-                visible:Cura.MachineManager.printerOutputDevices[0].printer_E_num() == 2 ? true : false
-                // visible: false
-                x:300
-                y:220
-                spacing: UM.Theme.getSize("default_lining").height
-                anchors
-                {
-                    leftMargin: UM.Theme.getSize("default_margin").width
-                    rightMargin: UM.Theme.getSize("default_margin").width
-                }
+            //         if (activePrintJob.state == "printing" || activePrintJob.state == "resuming" || activePrintJob.state == "pausing" || activePrintJob.state == "error" || activePrintJob.state == "offline")
+            //         {
+            //             return false; //Printer is in a state where it can't react to manual control
+            //         }
+            //         return true;
+            //     }
+            //     visible:Cura.MachineManager.printerOutputDevices[0].printer_E_num() == 2 ? true : false
+            //     // visible: false
+            //     x:300
+            //     y:220
+            //     spacing: UM.Theme.getSize("default_lining").height
+            //     anchors
+            //     {
+            //         leftMargin: UM.Theme.getSize("default_margin").width
+            //         rightMargin: UM.Theme.getSize("default_margin").width
+            //     }
 
-                Label
-                    {
-                        text: catalog.i18nc("@label", "E1")
-                        color: UM.Theme.getColor("setting_control_text")
-                        font: UM.Theme.getFont("default")
-                        width: UM.Theme.getSize("section").height
-                        height: UM.Theme.getSize("setting_control").height
-                        verticalAlignment: Text.AlignVCenter
-                        horizontalAlignment: Text.AlignHCenter
-                    }
+            //     Label
+            //         {
+            //             text: catalog.i18nc("@label", "E1")
+            //             color: UM.Theme.getColor("setting_control_text")
+            //             font: UM.Theme.getFont("default")
+            //             width: UM.Theme.getSize("section").height
+            //             height: UM.Theme.getSize("setting_control").height
+            //             verticalAlignment: Text.AlignVCenter
+            //             horizontalAlignment: Text.AlignHCenter
+            //         }
 
-                Button
-                    {
-                        iconSource: UM.Theme.getIcon("arrow_top");
-                        style: UM.Theme.styles.monitor_button_style
-                        width: height
-                        height: UM.Theme.getSize("setting_control").height
+            //     Button
+            //         {
+            //             iconSource: UM.Theme.getIcon("arrow_top");
+            //             style: UM.Theme.styles.monitor_button_style
+            //             width: height
+            //             height: UM.Theme.getSize("setting_control").height
 
-                        onClicked:
-                        {
-                            Cura.MachineManager.printerOutputDevices[0].e1up()
-                        }
-                    }
-                Button
-                    {
-                        iconSource: UM.Theme.getIcon("arrow_bottom");
-                        style: UM.Theme.styles.monitor_button_style
-                        width: height
-                        height: UM.Theme.getSize("setting_control").height
+            //             onClicked:
+            //             {
+            //                 Cura.MachineManager.printerOutputDevices[0].e1up()
+            //             }
+            //         }
+            //     Button
+            //         {
+            //             iconSource: UM.Theme.getIcon("arrow_bottom");
+            //             style: UM.Theme.styles.monitor_button_style
+            //             width: height
+            //             height: UM.Theme.getSize("setting_control").height
 
-                        onClicked:
-                        {
-                            Cura.MachineManager.printerOutputDevices[0].e1down()
-                        }
-                    }
-                }
+            //             onClicked:
+            //             {
+            //                 Cura.MachineManager.printerOutputDevices[0].e1down()
+            //             }
+            //         }
+            //     }
 
         }
 
